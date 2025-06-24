@@ -1,48 +1,29 @@
-from spotipy import Spotify
-from spotipy.oauth2 import SpotifyClientCredentials
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
-# Load credentials
+# Load environment variables
 load_dotenv()
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
+redirect_uri = os.getenv("REDIRECT_URI")
 
-# Set up Spotify client with client credentials manager
-sp = Spotify(auth_manager=SpotifyClientCredentials(
+# Define scopes: https://developer.spotify.com/documentation/web-api/concepts/scopes
+scope = "user-read-private user-read-email user-library-read playlist-read-private"
+
+# Authenticate the user
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     client_id=client_id,
-    client_secret=client_secret
+    client_secret=client_secret,
+    redirect_uri=redirect_uri,
+    scope=scope
 ))
 
-# Ask user for artist name
-artist_name = input("Enter artist name to get their popular tracks and genres: ")
+# Get current user info
+user = sp.current_user()
 
-# Search for the artist
-results = sp.search(q=artist_name, type="artist", limit=1)
-
-# Check if any artist was found
-if not results["artists"]["items"]:
-    print("Artist not found.")
-    exit()
-
-# Extract artist info
-artist = results["artists"]["items"][0]
-artist_id = artist["id"]
-artist_name = artist["name"]
-artist_genres = artist["genres"]
-
-print(f"\nTop Tracks for {artist_name}:\n")
-
-# Get artist's top tracks
-top_tracks = sp.artist_top_tracks(artist_id, country="US")
-
-# Print the track names
-for idx, track in enumerate(top_tracks["tracks"], start=1):
-    print(f"{idx}. {track['name']}")
-
-if artist_genres:
-    print("Genres:")
-    for genre in artist_genres:
-        print(f" - {genre}")
-else:
-    print("No genres available for this artist.")
+print(" Logged in as:", user["display_name"])
+print(" Email:", user["email"])
+print(" Country:", user["country"])
+print(" User ID:", user["id"])
