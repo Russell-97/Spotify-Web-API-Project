@@ -1,36 +1,48 @@
+from spotipy import Spotify
+from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
 import os
-import spotify
-import asyncio
 
+# Load credentials
 load_dotenv()
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 
-client = spotify.Client(client_id=client_id, client_secret=client_secret)
+# Set up Spotify client with client credentials manager
+sp = Spotify(auth_manager=SpotifyClientCredentials(
+    client_id=client_id,
+    client_secret=client_secret
+))
 
-async def main():
+# Ask user for artist name
+artist_name = input("Enter artist name to get their popular tracks and genres: ")
 
-    artist_name = input("Enter artist name to get their most popular tracks: ")
+# Search for the artist
+results = sp.search(q=artist_name, type="artist", limit=1)
 
-    results = await client.search(artist_name, types=["artist"], limit=1)
+# Check if any artist was found
+if not results["artists"]["items"]:
+    print("Artist not found.")
+    exit()
 
-    if not results.artists:
-        print("Artist not found.")
-        return
+# Extract artist info
+artist = results["artists"]["items"][0]
+artist_id = artist["id"]
+artist_name = artist["name"]
+artist_genres = artist["genres"]
 
-    artist = results.artists[0]
-    print(f"\nTop Tracks for {artist.name}:\n")
+print(f"\nTop Tracks for {artist_name}:\n")
 
-    top_tracks_data = await client.http.artist_top_tracks(artist.id, market="US")
-    top_tracks = top_tracks_data["tracks"]
+# Get artist's top tracks
+top_tracks = sp.artist_top_tracks(artist_id, country="US")
 
-    for idx, track in enumerate(top_tracks):
-        print(f"{idx + 1}. {track.name}")
+# Print the track names
+for idx, track in enumerate(top_tracks["tracks"], start=1):
+    print(f"{idx}. {track['name']}")
 
-# Run the async function using asyncio
-if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main())
-
-
-
+if artist_genres:
+    print("Genres:")
+    for genre in artist_genres:
+        print(f" - {genre}")
+else:
+    print("No genres available for this artist.")
