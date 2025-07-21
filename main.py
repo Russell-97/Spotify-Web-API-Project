@@ -1,43 +1,56 @@
 import os
+from flask import Flask, redirect, request, session, render_template
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-# Load environment variables
 load_dotenv()
-client_id = os.getenv("CLIENT_ID")
-client_secret = os.getenv("CLIENT_SECRET")
-redirect_uri = os.getenv("REDIRECT_URI")
 
-# Define scopes: https://developer.spotify.com/documentation/web-api/concepts/scopes
-scope = "user-read-private user-read-email user-library-read playlist-read-private user-top-read"
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
-# Authenticate the user
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=client_id,
-    client_secret=client_secret,
-    redirect_uri=redirect_uri,
-    scope=scope
-))
+# Spotify config
+SPOTIPY_CLIENT_ID = os.getenv("CLIENT_ID")
+SPOTIPY_CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+SPOTIPY_REDIRECT_URI = os.getenv("REDIRECT_URI")
+SCOPE = "user-read-private user-read-email user-library-read playlist-read-private user-top-read"
 
-# Get current user info
-user = sp.current_user()
+@app.route('/')
+def login():
+    sp_oauth = SpotifyOAuth(
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET,
+        redirect_uri=SPOTIPY_REDIRECT_URI,
+        scope=SCOPE
+    )
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
 
-print(" Logged in as:", user["display_name"])
-print(" Email:", user["email"])
-print(" Country:", user["country"])
-print(" User ID:", user["id"])
+@app.route('/callback')
+def callback():
+    sp_oauth = SpotifyOAuth(
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET,
+        redirect_uri=SPOTIPY_REDIRECT_URI,
+        scope=SCOPE
+    )
+    code = request.args.get('code')
+    token_info = sp_oauth.get_access_token(code)
+    session["token_info"] = token_info
+    return redirect('/profile')
 
-top_artists = sp.current_user_top_artists(limit=10, time_range='short_term')
+@app.route('/profile')
+def profile():
+    token_info = session.get("token_info")
+    if not token_info:
+        return redirect('/')
+    
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    user = sp.current_user()
+    top_artists = sp.current_user_top_artists(limit=10, time_range='short_term')
+    top_tracks = sp.current_user_top_tracks(limit=10, time_range='short_term')
 
-print("\nTop 10 Artists:")
-for idx, artist in enumerate(top_artists['items'], start=1):
-    print(f"{idx}. {artist['name']}")
+    return render_template('index.html', user=user, artists=top_artists['items'], tracks=top_tracks['items'])
 
-# Get user's top tracks
-top_tracks = sp.current_user_top_tracks(limit=10, time_range='short_term')
-
-print("\nTop 10 Tracks:")
-for idx, track in enumerate(top_tracks['items'], start=1):
-    artist_names = ", ".join([artist['name'] for artist in track['artists']])
-    print(f"{idx}. {track['name']} by {artist_names}")
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
