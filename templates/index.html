@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spotify Profile</title>
+</head>
+<body>
+    <h1>Logged in as: {{ user.display_name }}</h1>
+    <p>Email: {{ user.email }}</p>
+    <p>Country: {{ user.country }}</p>
+
+    <h2>Top 10 Artists</h2>
+    <ul>
+        {% for artist in artists %}
+            <li>{{ artist.name }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Top 10 Tracks</h2>
+    <ul>
+        {% for track in tracks %}
+            <li>{{ track.name }} by 
+                {{ ", ".join([artist.name for artist in track.artists]) }}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
