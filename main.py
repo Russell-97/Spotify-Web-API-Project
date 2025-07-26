@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, request, session, render_template
+from flask import Flask, redirect, request, session, render_template, url_for
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -37,13 +37,14 @@ def callback():
     code = request.args.get('code')
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
-    return redirect('/profile')
+    print(url_for('profile'))
+    return redirect(url_for('profile'))
 
 @app.route('/profile')
 def profile():
     token_info = session.get("token_info")
     if not token_info:
-        return redirect('/')
+        return redirect(url_for('/'))
     
     sp = spotipy.Spotify(auth=token_info['access_token'])
     user = sp.current_user()
@@ -53,4 +54,4 @@ def profile():
     return render_template('index.html', user=user, artists=top_artists['items'], tracks=top_tracks['items'])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 80)))
