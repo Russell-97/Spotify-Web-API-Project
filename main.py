@@ -46,21 +46,25 @@ def callback():
 
 @app.route('/profile')
 def profile():
-    token_info = session.get("token_info", None)
+    token_info = session.get("token_info")
     if not token_info:
-        return redirect(url_for('login'))
+        return redirect('/')
 
-    if token_info['expires_at'] - 10 < int(spotipy.oauth2.time.time()):
-        sp_oauth = create_spotify_oauth()
-        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
-        session['token_info'] = token_info
+    time_range = request.args.get("time_range", "short_term")  # default to short_term
 
     sp = spotipy.Spotify(auth=token_info['access_token'])
     user = sp.current_user()
-    top_artists = sp.current_user_top_artists(limit=10, time_range='short_term')
-    top_tracks = sp.current_user_top_tracks(limit=10, time_range='short_term')
+    top_artists = sp.current_user_top_artists(limit=10, time_range=time_range)
+    top_tracks = sp.current_user_top_tracks(limit=10, time_range=time_range)
 
-    return render_template('index.html', user=user, artists=top_artists['items'], tracks=top_tracks['items'])
+    return render_template(
+        'index.html',
+        user=user,
+        artists=top_artists['items'],
+        tracks=top_tracks['items'],
+        time_range=time_range
+    )
+
 
 @app.route('/logout')
 def logout():
