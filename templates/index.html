@@ -3,59 +3,91 @@
 <head>
     <title>Spotify Profile</title>
     <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1db954; /* Spotify green */
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 6px 0;
+            border-bottom: 1px solid #333;
+        }
         button {
             padding: 8px 14px;
             margin: 4px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            background-color: #eee;
+            background-color: #333;
+            color: #fff;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #444;
         }
         .active {
             background-color: #1db954; /* Spotify green */
-            color: white;
+            color: #fff;
             font-weight: bold;
         }
+        .logout-btn {
+            background-color: #e02424;
+            float: right;
+        }
+        .logout-btn:hover {
+            background-color: #b91c1c;
+        }
     </style>
-    
 </head>
 <body>
     <h1>Logged in as: {{ user.display_name }}</h1>
-    <p>Email: {{ user.email }}</p>
-    <p>Country: {{ user.country }}</p>
+
+    <a href="{{ url_for('logout') }}">
+        <button class="logout-btn">Logout</button>
+    </a>
 
     <h2>Choose Time Range</h2>
-<a href="{{ url_for('profile', time_range='short_term') }}">
-    <button class="{% if time_range == 'short_term' %}active{% endif %}">
-        Last Month
-    </button>
-</a>
-<a href="{{ url_for('profile', time_range='medium_term') }}">
-    <button class="{% if time_range == 'medium_term' %}active{% endif %}">
-        Last 6 Months
-    </button>
-</a>
-<a href="{{ url_for('profile', time_range='long_term') }}">
-    <button class="{% if time_range == 'long_term' %}active{% endif %}">
-        All Time
-    </button>
-</a>
+    <a href="{{ url_for('profile', time_range='short_term') }}">
+        <button class="{% if time_range == 'short_term' %}active{% endif %}">
+            Last Month
+        </button>
+    </a>
+    <a href="{{ url_for('profile', time_range='medium_term') }}">
+        <button class="{% if time_range == 'medium_term' %}active{% endif %}">
+            Last 6 Months
+        </button>
+    </a>
+    <a href="{{ url_for('profile', time_range='long_term') }}">
+        <button class="{% if time_range == 'long_term' %}active{% endif %}">
+            All Time
+        </button>
+    </a>
 
-
-    <h2>Top 10 Artists ({{ time_range.replace('_', ' ').title() }})</h2>
+    <h2>Top 10 Artists</h2>
     <ul>
         {% for artist in artists %}
             <li>{{ artist.name }}</li>
         {% endfor %}
     </ul>
 
-    <h2>Top 10 Tracks ({{ time_range.replace('_', ' ').title() }})</h2>
+    <h2>Top 10 Tracks</h2>
     <ul>
         {% for track in tracks %}
-            <li>{{ track.name }} by {{ track.artists | map(attribute='name') | join(', ') }}</li>
+            <li>{{ track.name }} by 
+                {% for artist in track.artists %}
+                    {{ artist.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </li>
         {% endfor %}
     </ul>
-
-    <a href="{{ url_for('logout') }}"><button>Logout</button></a>
 </body>
 </html>
