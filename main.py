@@ -56,12 +56,42 @@ def profile():
     user = sp.current_user()
     top_artists = sp.current_user_top_artists(limit=10, time_range=time_range)
     top_tracks = sp.current_user_top_tracks(limit=10, time_range=time_range)
+    tracks_for_album_count = sp.current_user_top_tracks(limit=50, time_range=time_range)
+
+    genre_counts = {}
+    for artist in top_artists['items']:
+        for genre in artist['genres']:
+            genre_counts[genre] = genre_counts.get(genre, 0) + 1
+
+    # Sort genres by frequency
+    top_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    album_counts = {}
+    for track in tracks_for_album_count['items']:
+        album = track['album']
+        album_name = album['name']
+        album_image = album['images'][0]['url'] if album['images'] else None
+        album_id = album['id']
+
+        if album_id not in album_counts:
+            album_counts[album_id] = {
+                'name': album_name,
+                'image': album_image,
+                'count': 0
+            }
+        album_counts[album_id]['count'] += 1
+
+    # Sort by frequency and take top 10
+    top_albums = sorted(album_counts.values(), key=lambda x: x['count'], reverse=True)[:10]
+
 
     return render_template(
         'index.html',
         user=user,
         artists=top_artists['items'],
         tracks=top_tracks['items'],
+        albums=top_albums,
+        genres=top_genres,
         time_range=time_range
     )
 
