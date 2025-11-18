@@ -34,11 +34,19 @@ def create_spotify_oauth():
 @app.route('/')
 def home():
     sp_oauth = create_spotify_oauth()
-    token_info = sp_oauth.get_cached_token()
+
+    try:
+        token_info = sp_oauth.get_cached_token()
+    except Exception:
+        # Token is invalid or refresh failed — reset session
+        session.clear()
+        return render_template("login.html")
 
     if not token_info:
-        return render_template("login.html")  
+        return render_template("login.html")
+
     return redirect('/profile')
+
 
 
 @app.route('/login')
