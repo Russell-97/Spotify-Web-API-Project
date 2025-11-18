@@ -1,110 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Spotify Profile</title>
+
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 25px;
         }
+
         h1, h2 {
             color: #1db954;
+            margin-bottom: 15px;
         }
+
         a {
             text-decoration: none;
+            color: inherit;
         }
+
         button {
-            padding: 8px 14px;
+            padding: 10px 18px;
             margin: 4px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            background-color: #333;
+            background-color: #2a2a2a;
             color: #fff;
-            transition: background-color 0.2s;
+            transition: 0.2s;
+            font-size: 0.95rem;
         }
+
         button:hover {
-            background-color: #444;
+            background-color: #3a3a3a;
         }
+
         .active {
-            background-color: #1db954;
-            color: #fff;
+            background-color: #1db954 !important;
+            color: #fff !important;
             font-weight: bold;
         }
+
         .logout-btn {
-            background-color: #e02424;
-            float: right;
+            background-color: #d22;
+            margin-left: 12px;
         }
         .logout-btn:hover {
-            background-color: #b91c1c;
+            background-color: #b11;
         }
+
+        /* Layout */
         .flex-container {
             display: flex;
             justify-content: space-between;
             gap: 30px;
-            margin-top: 30px;
             flex-wrap: wrap;
+            margin-top: 30px;
         }
+
         .section {
             flex: 1;
-            min-width: 350px;
+            min-width: 340px;
             background-color: #181818;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            box-shadow: 0 0 12px rgba(0,0,0,0.35);
         }
+
         .item {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
+            font-size: 1rem;
         }
+
         .item img {
             width: 64px;
             height: 64px;
-            border-radius: 4px;
-            margin-right: 12px;
+            border-radius: 6px;
+            margin-right: 15px;
             object-fit: cover;
         }
+
         .albums-section {
             margin-top: 40px;
         }
+
         .genre span {
-    font-size: 1rem;
-    color: #e5e5e5;
-    padding-left: 10px;
+            padding-left: 10px;
+            font-size: 1rem;
+            color: #e1e1e1;
         }
+
+        /* User info header */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
     </style>
 </head>
+
 <body>
-    <h1>Logged in as: {{ user.display_name }}</h1>
-    <p>Email: {{ user.email }}</p>
-    <p>Country: {{ user.country }}</p>
 
-    <a href="{{ url_for('logout') }}">
-        <button class="logout-btn">Logout</button>
-    </a>
+    <!-- USER INFO -->
+    <div class="profile-header">
+        <div>
+            <h1>Logged in as: {{ user.display_name }}</h1>
+            <p>Email: {{ user.email }}</p>
+            <p>Country: {{ user.country }}</p>
+        </div>
 
+        <div>
+            <a href="{{ url_for('logout') }}">
+                <button class="logout-btn">Logout</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- TIME RANGE BUTTONS -->
     <h2>Choose Time Range</h2>
-    <a href="{{ url_for('profile', time_range='short_term') }}">
+
+    <a href="{{ url_for('profile', range='short_term') }}">
         <button class="{% if time_range == 'short_term' %}active{% endif %}">Last 4 Weeks</button>
     </a>
-    <a href="{{ url_for('profile', time_range='medium_term') }}">
+
+    <a href="{{ url_for('profile', range='medium_term') }}">
         <button class="{% if time_range == 'medium_term' %}active{% endif %}">Last 6 Months</button>
     </a>
-    <a href="{{ url_for('profile', time_range='long_term') }}">
+
+    <a href="{{ url_for('profile', range='long_term') }}">
         <button class="{% if time_range == 'long_term' %}active{% endif %}">All Time</button>
     </a>
 
-    <!-- Flexbox container for artists and tracks -->
+    <!-- TOP ARTISTS + TOP TRACKS -->
     <div class="flex-container">
         <div class="section">
             <h2>Artists</h2>
             {% for artist in artists %}
-                <div class="item artist">
-                    {% if artist.images and artist.images[0] %}
+                <div class="item">
+                    {% if artist.images %}
                         <img src="{{ artist.images[0].url }}" alt="{{ artist.name }}">
                     {% endif %}
                     <span>{{ artist.name }}</span>
@@ -115,12 +155,13 @@
         <div class="section">
             <h2>Tracks</h2>
             {% for track in tracks %}
-                <div class="item track">
-                    {% if track.album.images and track.album.images[0] %}
+                <div class="item">
+                    {% if track.album.images %}
                         <img src="{{ track.album.images[0].url }}" alt="{{ track.name }}">
                     {% endif %}
+
                     <span>
-                        {{ track.name }} by 
+                        {{ track.name }} — 
                         {% for artist in track.artists %}
                             {{ artist.name }}{% if not loop.last %}, {% endif %}
                         {% endfor %}
@@ -130,30 +171,29 @@
         </div>
     </div>
 
-  <!-- Albums and Genres displayed side by side -->
-<div class="flex-container albums-section">
-    <div class="section">
-        <h2>Top 10 Albums</h2>
-        {% for album in albums %}
-            <div class="item album">
-                {% if album.image %}
-                    <img src="{{ album.image }}" alt="{{ album.name }}">
-                {% endif %}
-                <span>{{ album.name }}</span>
-            </div>
-        {% endfor %}
-    </div>
+    <!-- TOP ALBUMS + GENRES -->
+    <div class="flex-container albums-section">
+        <div class="section">
+            <h2>Albums</h2>
+            {% for album in albums %}
+                <div class="item">
+                    {% if album.image %}
+                        <img src="{{ album.image }}" alt="{{ album.name }}">
+                    {% endif %}
+                    <span>{{ album.name }}</span>
+                </div>
+            {% endfor %}
+        </div>
 
-    <div class="section">
-        <h2>Top 10 Genres</h2>
-        {% for genre, count in genres %}
-            <div class="item genre">
-                <span>{{ genre | title }}</span>
-            </div>
-        {% endfor %}
+        <div class="section">
+            <h2>Genres</h2>
+            {% for genre, count in genres %}
+                <div class="item genre">
+                    <span>{{ genre | title }}</span>
+                </div>
+            {% endfor %}
+        </div>
     </div>
-</div>
-
 
 </body>
 </html>
